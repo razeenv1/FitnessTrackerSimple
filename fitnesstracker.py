@@ -7,185 +7,162 @@ import matplotlib.dates as mdates
 
 CELESTIAL_PATH_TO_DATA = 'fitness_data.csv'
 
-def initialize_data_chronicle():
-    """
-    Ensures the sacred scroll (CSV file) exists with the correct headers.
-    If the file is not found, it is created.
-    """
+def initialize_data_file():
     if not os.path.exists(CELESTIAL_PATH_TO_DATA):
-        with open(CELESTIAL_PATH_TO_DATA, 'w', newline='') as scroll:
-            scribe = csv.writer(scroll)
-            scribe.writerow(['Timestamp', 'StepsCount', 'CaloriesBurned', 'WorkoutDurationMinutes'])
+        with open(CELESTIAL_PATH_TO_DATA, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Timestamp', 'StepsCount', 'CaloriesBurned', 'WorkoutDurationMinutes'])
 
-def record_daily_metrics():
-    """
-    Gathers and records the champion's daily efforts into the data chronicle.
-    Includes robust validation for all user inputs.
-    """
-    print("\n--- Record Your Daily Triumph ---")
+def get_positive_int(prompt):
     while True:
         try:
-            date_input_str = input("Enter the date of your activity (YYYY-MM-DD): ")
-            validated_date = datetime.strptime(date_input_str, '%Y-%m-%d').strftime('%Y-%m-%d')
+            val = int(input(prompt))
+            if val < 0:
+                raise ValueError
+            return val
+        except ValueError:
+            print("Invalid input. Please enter a positive integer.")
+
+def record_data():
+    print("\n--- Add Fitness Record ---")
+    while True:
+        try:
+            date_str = input("Enter date (YYYY-MM-DD): ")
+            date_val = datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y-%m-%d')
             break
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
 
-    while True:
-        try:
-            quantum_of_locomotion = int(input("Enter the total steps taken: "))
-            if quantum_of_locomotion < 0:
-                raise ValueError("Steps cannot be negative.")
-            break
-        except ValueError:
-            print("Invalid input. Please enter a positive whole number for steps.")
+    steps = get_positive_int("Enter steps: ")
+    calories = get_positive_int("Enter calories burned: ")
+    duration = get_positive_int("Enter workout duration (minutes): ")
 
-    while True:
-        try:
-            quantum_of_energy = int(input("Enter the total calories burned: "))
-            if quantum_of_energy < 0:
-                raise ValueError("Calories cannot be negative.")
-            break
-        except ValueError:
-            print("Invalid input. Please enter a positive whole number for calories.")
+    with open(CELESTIAL_PATH_TO_DATA, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([date_val, steps, calories, duration])
 
-    while True:
-        try:
-            temporal_expanse_of_effort = int(input("Enter the duration of exercise (in minutes): "))
-            if temporal_expanse_of_effort < 0:
-                raise ValueError("Duration cannot be negative.")
-            break
-        except ValueError:
-            print("Invalid input. Please enter a positive whole number for duration.")
+    print("Record added successfully.")
 
-    with open(CELESTIAL_PATH_TO_DATA, 'a', newline='') as scroll:
-        scribe = csv.writer(scroll)
-        scribe.writerow([validated_date, quantum_of_locomotion, quantum_of_energy, temporal_expanse_of_effort])
-    
-    print("\nYour Data has been added")
-
-def perform_data_analysis():
-    """
-    Reads the chronicle of efforts and reveals profound insights.
-    Displays aggregate statistics and a detailed summary.
-    """
-    print("\n--- Analyzing the Saga of Your Efforts ---")
+def analyze_data():
     try:
-        chronicle_of_efforts = pd.read_csv(CELESTIAL_PATH_TO_DATA)
-        if chronicle_of_efforts.empty:
-            print("No Data Found. Record some data first.")
+        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        if df.empty:
+            print("No data found.")
             return
+        
+        total_steps = df['StepsCount'].sum()
+        total_calories = df['CaloriesBurned'].sum()
+        avg_duration = df['WorkoutDurationMinutes'].mean()
 
-        total_steps = chronicle_of_efforts['StepsCount'].sum()
-        total_calories = chronicle_of_efforts['CaloriesBurned'].sum()
-        average_duration = chronicle_of_efforts['WorkoutDurationMinutes'].mean()
+        print(f"\nTotal Steps: {total_steps:,}")
+        print(f"Total Calories: {total_calories:,}")
+        print(f"Average Duration: {avg_duration:.2f} minutes")
+        print("\nDetailed Statistics:\n", df.describe())
 
-        print(f"\nTotal Steps Forged: {total_steps:,}")
-        print(f"Total Calories Obliterated: {total_calories:,}")
-        print(f"Average Workout Duration: {average_duration:.2f} minutes")
+        # Identify best and worst step days
+        best_day = df.loc[df['StepsCount'].idxmax()]
+        worst_day = df.loc[df['StepsCount'].idxmin()]
+        print(f"\nBest Step Day: {best_day['Timestamp']} - {best_day['StepsCount']} steps")
+        print(f"Worst Step Day: {worst_day['Timestamp']} - {worst_day['StepsCount']} steps")
 
-        print("\n--- Comprehensive Statistical Overview ---")
-        print(chronicle_of_efforts.describe())
+        # Export statistics
+        stats_file = 'fitness_summary.csv'
+        df.describe().to_csv(stats_file)
+        print(f"\nSummary exported to {stats_file}")
 
     except FileNotFoundError:
-        print("The data (fitness_data.csv) is not found. Please add data first.")
-    except Exception as e:
-        print(f"An unexpected error occurred during analysis: {e}")
+        print("Data file not found.")
 
-def visualize_fitness_progress():
-    """
-    Translates raw data into beautiful, inspiring visual tapestries.
-    Plots weekly steps and long-term calorie expenditure.
-    """
-    print("\n--- Visualizing Data ---")
+def visualize_data():
+    # Generate step bar chart and calorie line chart
     try:
-        chronicle_of_efforts = pd.read_csv(CELESTIAL_PATH_TO_DATA)
-        if chronicle_of_efforts.empty:
+        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        if df.empty:
             print("No data to visualize.")
             return
 
-        chronicle_of_efforts['Timestamp'] = pd.to_datetime(chronicle_of_efforts['Timestamp'])
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 
-        weekly_data = chronicle_of_efforts.tail(7)
-        if not weekly_data.empty:
-            plt.style.use('seaborn-v0_8-darkgrid')
-            fig1, ax1 = plt.subplots(figsize=(12, 7))
-
-            dates_as_str = weekly_data['Timestamp'].dt.strftime('%Y-%m-%d')
-            colors = ['#4A90E2'] * len(weekly_data)
-
-            peak_performance_index = weekly_data['StepsCount'].idxmax()
-            if pd.notna(peak_performance_index) and peak_performance_index in weekly_data.index:
-                peak_idx_pos = weekly_data.index.get_loc(peak_performance_index)
-                colors[peak_idx_pos] = '#F5A623'
-
-            bars = ax1.bar(dates_as_str, weekly_data['StepsCount'], color=colors)
-
-            ax1.set_title('Champion\'s Steps: Last 7 Days', fontsize=18, fontweight='bold', color='#333')
-            ax1.set_xlabel('Date', fontsize=12, fontweight='bold')
-            ax1.set_ylabel('Steps Taken', fontsize=12, fontweight='bold')
-            plt.xticks(rotation=45, ha='right')
-
-            from matplotlib.patches import Patch
-            legend_elements = [Patch(facecolor='#4A90E2', edgecolor='black', label='Daily Steps'),
-                               Patch(facecolor='#F5A623', edgecolor='black', label='Peak Performance Day')]
-            ax1.legend(handles=legend_elements)
-
-            plt.tight_layout()
-            print("Displaying bar chart of recent steps...")
-            plt.show()
-
-        fig2, ax2 = plt.subplots(figsize=(12, 7))
-        ax2.plot(chronicle_of_efforts['Timestamp'], chronicle_of_efforts['CaloriesBurned'], marker='o', linestyle='-', color='#D0021B', label='Calories Burned')
-
-        ax2.set_title('Caloric Expenditure Over Time', fontsize=18, fontweight='bold', color='#333')
-        ax2.set_xlabel('Date', fontsize=12, fontweight='bold')
-        ax2.set_ylabel('Calories Burned', fontsize=12, fontweight='bold')
-
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax2.xaxis.set_major_locator(mdates.AutoDateLocator())
-        fig2.autofmt_xdate()
-
-        ax2.grid(True, which='both', linestyle='--', linewidth=0.5)
-        ax2.legend()
+        # Plot last 7 days steps
+        recent = df.tail(7)
+        plt.style.use('seaborn-v0_8-darkgrid')
+        fig, ax = plt.subplots(figsize=(12, 7))
+        colors = ['#4A90E2'] * len(recent)
+        peak_idx = recent['StepsCount'].idxmax()
+        if pd.notna(peak_idx):
+            colors[recent.index.get_loc(peak_idx)] = '#F5A623'
+        ax.bar(recent['Timestamp'].dt.strftime('%Y-%m-%d'), recent['StepsCount'], color=colors)
+        ax.set_title('Steps - Last 7 Days', fontsize=18, fontweight='bold')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Steps')
+        plt.xticks(rotation=45)
         plt.tight_layout()
-        print("Displaying line chart of calories burned...")
+        plt.show()
+
+        # Plot calories over time
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.plot(df['Timestamp'], df['CaloriesBurned'], marker='o', color='#D0021B')
+        ax.set_title('Calories Over Time', fontsize=18, fontweight='bold')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Calories')
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        fig.autofmt_xdate()
+        plt.tight_layout()
         plt.show()
 
     except FileNotFoundError:
-        print("The data (fitness_data.csv) is not found.")
+        print("Data file not found.")
+
+def search_by_date_range():
+    try:
+        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        if df.empty:
+            print("No data found.")
+            return
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+        start = datetime.strptime(input("Start date (YYYY-MM-DD): "), '%Y-%m-%d')
+        end = datetime.strptime(input("End date (YYYY-MM-DD): "), '%Y-%m-%d')
+        filtered = df[(df['Timestamp'] >= start) & (df['Timestamp'] <= end)]
+        print(filtered if not filtered.empty else "No records in range.")
     except Exception as e:
-        print(f"A visualization error occurred: {e}")
+        print("Error:", e)
+
+def delete_record():
+    try:
+        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        date_str = input("Enter date to delete (YYYY-MM-DD): ")
+        df = df[df['Timestamp'] != date_str]
+        df.to_csv(CELESTIAL_PATH_TO_DATA, index=False)
+        print("Record deleted if it existed.")
+    except FileNotFoundError:
+        print("Data file not found.")
 
 def main():
-    """
-    Presents a menu to navigate the application's features.
-    """
-    initialize_data_chronicle()
+    initialize_data_file()
     while True:
-        print("\n=============================================")
-        print("   Inside the Mind and Muscles of Champions  ")
-        print("      Fitness Tracking & Visualization       ")
-        print("=============================================")
-        print("1. Add New Fitness Data")
-        print("2. Analyze Fitness Data")
-        print("3. Visualize Fitness Progress")
-        print("4. Exit the Application")
-        print("---------------------------------------------")
-        
-        choice = input("Choose your option (1-4): ")
-
+        print("\n=== Fitness Tracker ===")
+        print("1. Add Data")
+        print("2. Analyze Data")
+        print("3. Visualize Data")
+        print("4. Search by Date Range")
+        print("5. Delete Record")
+        print("6. Exit")
+        choice = input("Select option (1-6): ")
         if choice == '1':
-            record_daily_metrics()
+            record_data()
         elif choice == '2':
-            perform_data_analysis()
+            analyze_data()
         elif choice == '3':
-            visualize_fitness_progress()
+            visualize_data()
         elif choice == '4':
-            print("\nExiting Application...")
+            search_by_date_range()
+        elif choice == '5':
+            delete_record()
+        elif choice == '6':
+            print("Exiting...")
             break
         else:
-            print("\nInvalid choice. Please enter a number between 1 and 4.")
+            print("Invalid option.")
 
 if __name__ == "__main__":
     main()
