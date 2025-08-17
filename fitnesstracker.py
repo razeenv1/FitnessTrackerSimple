@@ -132,7 +132,7 @@ def delete_record():
         df = pd.read_csv(PATH_TO_DATA)
         date_str = input("Enter date to delete (YYYY-MM-DD): ")
         df = df[df['Timestamp'] != date_str]
-        df.to_csv(CELESTIAL_PATH_TO_DATA, index=False)
+        df.to_csv(PATH_TO_DATA, index=False)
         print("Record deleted if it existed.")
     except FileNotFoundError:
         print("Data file not found.")
@@ -166,5 +166,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
