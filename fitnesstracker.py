@@ -5,11 +5,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-CELESTIAL_PATH_TO_DATA = 'fitness_data.csv'
+PATH_TO_DATA = 'fitness_data.csv'
 
 def initialize_data_file():
-    if not os.path.exists(CELESTIAL_PATH_TO_DATA):
-        with open(CELESTIAL_PATH_TO_DATA, 'w', newline='') as f:
+    if not os.path.exists(PATH_TO_DATA):
+        with open(PATH_TO_DATA, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['Timestamp', 'StepsCount', 'CaloriesBurned', 'WorkoutDurationMinutes'])
 
@@ -37,7 +37,7 @@ def record_data():
     calories = get_positive_int("Enter calories burned: ")
     duration = get_positive_int("Enter workout duration (minutes): ")
 
-    with open(CELESTIAL_PATH_TO_DATA, 'a', newline='') as f:
+    with open(PATH_TO_DATA, 'a', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([date_val, steps, calories, duration])
 
@@ -45,7 +45,7 @@ def record_data():
 
 def analyze_data():
     try:
-        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        df = pd.read_csv(PATH_TO_DATA)
         if df.empty:
             print("No data found.")
             return
@@ -76,7 +76,7 @@ def analyze_data():
 def visualize_data():
     # Generate step bar chart and calorie line chart
     try:
-        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        df = pd.read_csv(PATH_TO_DATA)
         if df.empty:
             print("No data to visualize.")
             return
@@ -115,7 +115,7 @@ def visualize_data():
 
 def search_by_date_range():
     try:
-        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        df = pd.read_csv(PATH_TO_DATA)
         if df.empty:
             print("No data found.")
             return
@@ -129,7 +129,7 @@ def search_by_date_range():
 
 def delete_record():
     try:
-        df = pd.read_csv(CELESTIAL_PATH_TO_DATA)
+        df = pd.read_csv(PATH_TO_DATA)
         date_str = input("Enter date to delete (YYYY-MM-DD): ")
         df = df[df['Timestamp'] != date_str]
         df.to_csv(CELESTIAL_PATH_TO_DATA, index=False)
@@ -166,4 +166,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
